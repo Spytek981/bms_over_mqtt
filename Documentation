@@ -1,0 +1,3 @@
+/spine/# -   main topic for all interface structure
+/spine/network-id/#  - topic for all devices in network
+/spine/networ-id/spine-mac-address/ - topic for communication with 

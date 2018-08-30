@@ -39,7 +39,7 @@ static void cmd_help(uint32_t argc, char *argv[])
 static void cmd_mqttSendMessage(uint32_t argc, char *argv[])
 {
     char msg[PUB_MSG_LEN];
-    snprintf(msg, PUB_MSG_LEN, argv[0]);
+    snprintf(msg, PUB_MSG_LEN, argv[1]);
     printf("terminal send message %s\n", msg);
     xQueueSend(publish_queue, msg,0);
 }
