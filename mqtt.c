@@ -99,8 +99,16 @@ static void  mqtt_task(void *pvParameters)
             taskYIELD();
             continue;
         }
-        printf("done\r\n");
-        mqtt_subscribe(&client, BASE_TOPIC, MQTT_QOS1, topic_received);
+        printf("Subscribing to base topic '%s' ", BASE_TOPIC);
+        if(mqtt_subscribe(&client, BASE_TOPIC, MQTT_QOS1, topic_received) != MQTT_SUCCESS)
+        {
+            printf("FAILED!!!!\n") ;  
+        }
+        else
+        {
+            printf("SUCCESS!\n");    
+        }
+        
         xQueueReset(publish_queue);
 
         while(1)

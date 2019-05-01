@@ -4,9 +4,27 @@
 #include <task.h>
 #include <semphr.h>
 
+#define WIFI_CLIENT_MODE 1
+
 extern SemaphoreHandle_t wifi_alive;
 
+// void startWifiAP(void)
+// {
+//     uart_set_baud(0, 115200);
+//     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
+//     sdk_wifi_set_opmode(SOFTAP_MODE);
+//     struct ip_info ap_ip;
+//     IP4_ADDR(&ap_ip.ip, 172, 16, 0, 1);
+//     IP4_ADDR(&ap_ip.gw, 0, 0, 0, 0);
+//     IP4_ADDR(&ap_ip.netmask, 255, 255, 0, 0);
+//     sdk_wifi_set_ip_info(1, &ap_ip);
+
+//     struct sdk_softap_config ap_config = { .ssid = AP_SSID, .ssid_hidden = 0, .channel = 3, .ssid_len = strlen(AP_SSID), .authmode =
+//             AUTH_WPA_WPA2_PSK, .password = AP_PSK, .max_connection = 3, .beacon_interval = 100, };
+//     sdk_wifi_softap_set_config(&ap_config);
+
+// }
 static void  wifi_task(void *pvParameters)
 {
     uint8_t status  = 0;

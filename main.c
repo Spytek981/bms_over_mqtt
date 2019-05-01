@@ -9,9 +9,13 @@
 #include "terminal.h"
 #include "wifi.h"
 #include "mqtt.h"
+#include "io.h"
+#include "datamanager.h"
 
 SemaphoreHandle_t wifi_alive;
 QueueHandle_t publish_queue;
+
+
 
 void user_init(void)
 {
@@ -25,4 +29,5 @@ void user_init(void)
     vTaskDelay(3000 / portTICK_PERIOD_MS);
     TERMINAL_init();
     MQTT_init();
+    // IO_init();
 }

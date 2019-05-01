@@ -18,6 +18,7 @@
 #include <queue.h>
 #include "mqtt.h"
 #include "terminal.h"
+#include "datamanager.h"
 
 #define MAX_ARGC (10)
 
@@ -44,6 +45,35 @@ static void cmd_mqttSendMessage(uint32_t argc, char *argv[])
     xQueueSend(publish_queue, msg,0);
 }
 
+static void cmd_reboot(uint32_t argc, char *argv[])
+{
+    printf("Rebooting...\n");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    sdk_system_restart();
+}
+
+static void cmd_printSpineDAta(uint32_t argc, char *argv[])
+{
+    DATAMANAGER_printSpineData();
+}
+
+
+static struct CMD_dictionary 
+{
+    uint8_t cmdName[16];
+    void (*cmdHandler)(uint32_t argc, char*argv[]);
+};
+
+static struct CMD_dictionary CMDdict[]=
+{
+    "help", &cmd_help,
+    "sl", &cmd_mqttSendMessage,
+    "reboot", &cmd_reboot,
+    "psdata", &cmd_printSpineDAta,
+
+};
+
+#define CMD_DICT_SIZE (sizeof(CMDdict)/sizeof(struct CMD_dictionary))
 
 static void handle_command(char *cmd)
 {
@@ -60,12 +90,19 @@ static void handle_command(char *cmd)
         argv[argc++] = rover;
         *temp = 0;
     }
-
-    if (strlen(argv[0]) > 0) {
-        if (strcmp(argv[0], "help") == 0) cmd_help(argc, argv);
-        else if (strcmp(argv[0], "sl") == 0) cmd_mqttSendMessage(argc, argv);
-        else printf("Unknown command %s, try 'help'\n", argv[0]);
+    if (strlen(argv[0]) > 0)
+    {
+        for(uint16_t cmdIdx = 0; cmdIdx < CMD_DICT_SIZE; cmdIdx++)
+        {
+            if(strcmp(argv[0], CMDdict[cmdIdx].cmdName) == 0) 
+            {
+                CMDdict[cmdIdx].cmdHandler(argc, argv);
+                return;
+            }
+        }
+        printf("Unknown command %s, try 'help'\n", argv[0]);
     }
+
 }
 
 static void terminal_task()
@@ -74,6 +111,7 @@ static void terminal_task()
     char cmd[81];
     int i = 0;
     printf("\n\n\nWelcome in Spine! module!\n");
+    printf("Cmd dict size: %d\n", sizeof(CMDdict)/sizeof(struct CMD_dictionary) );
     printf(PROMPT);
     fflush(stdout); // stdout is line buffered
     while(1) 
@@ -89,7 +127,7 @@ static void terminal_task()
                 i = 0;
                 printf("\n");
                 handle_command((char*) cmd);
-                printf(PROMPT);
+                printf("\n%s",PROMPT);
                 
             } 
             else if(ch == '\b' || ch == '\x7f')
