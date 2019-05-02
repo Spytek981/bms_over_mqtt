@@ -57,6 +57,24 @@ static void cmd_printSpineDAta(uint32_t argc, char *argv[])
     DATAMANAGER_printSpineData();
 }
 
+static void cmd_setSpineData(uint32_t argc, char *argv[])
+{
+    printf("argc %d\n", argc);
+    if(argc < 4)
+    {
+        printf("Not enough arguments. Try NAME SSID PASSWORD\n");
+        return;
+    }
+    else
+    {
+        SpineConfigDataStruct configData;
+        strcpy(&configData.name, argv[1]);
+        strcpy(&configData.ssid, argv[2]);
+        strcpy(&configData.password, argv[3]);
+        DATAMANAGER_setSpineData(&configData);
+    }
+    
+}
 
 static struct CMD_dictionary 
 {
@@ -70,6 +88,7 @@ static struct CMD_dictionary CMDdict[]=
     "sl", &cmd_mqttSendMessage,
     "reboot", &cmd_reboot,
     "psdata", &cmd_printSpineDAta,
+    "ssdata", &cmd_setSpineData,
 
 };
 

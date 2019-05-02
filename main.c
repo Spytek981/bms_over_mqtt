@@ -11,6 +11,7 @@
 #include "mqtt.h"
 #include "io.h"
 #include "datamanager.h"
+#include "httpServer.h"
 
 SemaphoreHandle_t wifi_alive;
 QueueHandle_t publish_queue;
@@ -30,4 +31,6 @@ void user_init(void)
     TERMINAL_init();
     MQTT_init();
     // IO_init();
+    DATAMANAGER_init();
+    HTTP_init();
 }

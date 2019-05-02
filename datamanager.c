@@ -4,16 +4,7 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
-
-typedef struct SpineConfigDataStruct
-{
-    uint32_t statusRegister;
-    uint8_t ssid[32];     /* Null terminated string */
-    uint8_t password[64]; /* Null terminated string */
-    uint8_t name[32];
-}SpineConfigDataStruct;
-
-
+#include "datamanager.h"
 SpineConfigDataStruct SpineData;
 
 static void spineData_init(SpineConfigDataStruct *spineData)
@@ -26,6 +17,7 @@ static void spineData_init(SpineConfigDataStruct *spineData)
 
 void DATAMANAGER_init(void)
 {
+    printf("%s\n", __func__);
     spineData_init(&SpineData);
     return;
 }
@@ -35,5 +27,12 @@ void DATAMANAGER_printSpineData(void)
     printf("name: %s\n", SpineData.name);
     printf("ssid: %s\n", SpineData.ssid);
     printf("password: %s\n", SpineData.password);
-    printf("statusRegister: %s\n", SpineData.statusRegister);
+    printf("statusRegister: %08X\n", SpineData.statusRegister);
 }
+
+int8_t DATAMANAGER_setSpineData(struct SpineConfigDataStruct *newdata )
+{
+    memcpy(&SpineData, newdata, sizeof(SpineConfigDataStruct));
+    printf("%s - new data saved!\n", __func__);
+    return true;
+};

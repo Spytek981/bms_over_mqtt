@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/media/spytek/home/home_old/spytek/programming/esp-open-rtos/**",
+                "/media/spytek/home/home_old/spytek/programming/esp-open-sdk/**",
+                "/media/spytek/home/home_old/spytek/programming/esp-open-rtos/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
