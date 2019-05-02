@@ -7,7 +7,7 @@ include ../../esp-open-rtos/myCommon.mk
 
 
 #Enable debugging
-#EXTRA_CFLAGS+=-DLWIP_DEBUG=1 -DHTTPD_DEBUG=LWIP_DBG_ON
+EXTRA_CFLAGS+=-DLWIP_DEBUG=1 -DHTTPD_DEBUG=LWIP_DBG_ON
 
 html:
 	@echo "Generating fsdata.."

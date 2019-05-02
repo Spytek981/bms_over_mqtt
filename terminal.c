@@ -67,7 +67,7 @@ static void cmd_setSpineData(uint32_t argc, char *argv[])
     }
     else
     {
-        SpineConfigDataStruct configData;
+        TSpineConfigDataStruct configData;
         strcpy(&configData.name, argv[1]);
         strcpy(&configData.ssid, argv[2]);
         strcpy(&configData.password, argv[3]);

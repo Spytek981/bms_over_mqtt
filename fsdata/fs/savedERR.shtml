@@ -3,6 +3,7 @@
 <title>Spine configuration page</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- <meta http-equiv="refresh" content="5;url=index.shtml" /> -->
 <link rel="stylesheet" type="text/css" href="css/style.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
@@ -64,20 +65,11 @@
     <div class="w3-twothird">
 		<h1>Home</h1>
 		<h5 class="w3-padding-32">This page allows You to change configuration of your Spine module. 
-			Use form below, to change the configuration, and save it using commit button.</h5>
-
-      <!-- <p class="w3-text-grey">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Excepteur sint
-        occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-		laboris nisi ut aliquip ex ea commodo consequat.</p> -->
-		<form name="device_params" action="config" method="get" onsubmit="return verifyForm()">
-			Module name:
-			<input type="text" name="set_devname" class="w3-input" value="<!--#devname-->"><br>
-			SSID:
-			<input type="text" name="set_netssid" class="w3-input" value="<!--#netssid-->"><br>
-			PASSWORD:
-			<input type="password" name="set_netpass" class="w3-input" value="<!--#netpass-->"><br>
-			<input type="submit" value="Commit" class="w3-lime w3-btn w3-right">
-		</form>
+			  Use form below, to change the configuration, and save it using commit button.</h5>
+    
+        <p class="w3-text-red"><b>Configuration error!</p>
+        <p>Details: <i><!--#errdet--></i></p>
+        <a href="index.shtml"> <button class="w3-btn w3-lime w3-right">OK</button></a>
     </div>
   </div>
 </div>
@@ -108,21 +100,6 @@ function myFunction() {
   } else { 
     x.className = x.className.replace(" w3-show", "");
   }
-}
-
-function verifyForm()
-{
-    var nameForm = document.forms["device_params"]["set_devname"];
-    var ssidForm = document.forms["device_params"]["set_devname"];
-    var passForm = document.forms["device_params"]["set_devname"];
-
-    if(nameForm.value.includes(" "))
-    {
-        alert("Spaces are not permited in name field");
-        return false;
-    }
-    else 
-        return true;
 }
 </script>
 

@@ -5,9 +5,9 @@
 #include <task.h>
 #include <semphr.h>
 #include "datamanager.h"
-SpineConfigDataStruct SpineData;
+TSpineConfigDataStruct SpineData;
 
-static void spineData_init(SpineConfigDataStruct *spineData)
+static void spineData_init(TSpineConfigDataStruct *spineData)
 {
     strcpy(spineData->name,  "My first spine module");
     strcpy(spineData->ssid, "laserX");
@@ -30,9 +30,16 @@ void DATAMANAGER_printSpineData(void)
     printf("statusRegister: %08X\n", SpineData.statusRegister);
 }
 
-int8_t DATAMANAGER_setSpineData(struct SpineConfigDataStruct *newdata )
+int8_t DATAMANAGER_setSpineData(TSpineConfigDataStruct *newdata )
 {
-    memcpy(&SpineData, newdata, sizeof(SpineConfigDataStruct));
+    memcpy(&SpineData, newdata, sizeof(TSpineConfigDataStruct));
     printf("%s - new data saved!\n", __func__);
     return true;
 };
+
+int8_t DATAMANAGER_getSpineData(TSpineConfigDataStruct *dataContainer )
+{
+    memcpy(dataContainer, &SpineData, sizeof(TSpineConfigDataStruct));
+    printf("%s - data readed!\n", __func__);
+    return true;
+}
