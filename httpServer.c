@@ -16,7 +16,8 @@ enum ssiTagIndexes
     ssiTag_dev_name,
     ssiTag_net_ssid,
     ssiTag_net_password,
-    ssiTag_save_Err_Details
+    ssiTag_save_Err_Details,
+    ssiTag_net_apmode,
 };
 
 
@@ -74,6 +75,20 @@ int32_t ssi_handler(int32_t iIndex, char *pcInsert, int32_t iInsertLen)
             snprintf(pcInsert, iInsertLen, saveErrorTracebackBuffer);
             break;
         }
+        case ssiTag_net_apmode:
+        {
+            printf("apmode\n");
+            TSpineConfigDataStruct tempData;
+            if(DATAMANAGER_getSpineData(&tempData))
+            {
+                snprintf(pcInsert, iInsertLen, "%d", tempData.wifiMode);
+            }
+            else
+            {
+                snprintf(pcInsert, iInsertLen, "UNDEFINED!");
+            }
+            break;
+        }
         default:
             snprintf(pcInsert, iInsertLen, "N/A");
             break;
@@ -94,10 +109,28 @@ char *test_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValu
 
 char *commitData_cgi_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
+    // if(iNumParams < 3)
+    // {
+    //     strcpy(saveErrorTracebackBuffer, "Not enought parameters");
+    //     return "/savedERR.shtml";
+    // }
+    TSpineConfigDataStruct newSpineConfiguration;
+    DATAMANAGER_getSpineData(&newSpineConfiguration);
     for (int i = 0; i < iNumParams; i++) {
         printf("param_%d: %s, value: %s\n", i, pcParam[i], pcValue[i]);
+        if(!strcmp(pcParam[i], "set_devname")) strcpy(&newSpineConfiguration.name, pcValue[i]);
+        if(!strcmp(pcParam[i], "set_netssid")) strcpy(&newSpineConfiguration.ssid, pcValue[i]);
+        if(!strcmp(pcParam[i], "set_netpass")) strcpy(&newSpineConfiguration.password, pcValue[i]);
+        if(!strcmp(pcParam[i], "set_apmode")) newSpineConfiguration.wifiMode = atoi(pcValue[i]);
     }
-    return "/savedERR.shtml";
+    // printf("%s %s %s\n", newSpineConfiguration.name, newSpineConfiguration.ssid, newSpineConfiguration.password);
+    if(DATAMANAGER_setSpineData(&newSpineConfiguration))
+        return "/savedOK.html";
+    else
+    {
+        strcpy(saveErrorTracebackBuffer, "DATAMANAGER_setSpineData failed");
+        return "/savedERR.shtml";
+    }
 }
 
 static void httpd_task(void *pvParameters)
@@ -111,6 +144,7 @@ static void httpd_task(void *pvParameters)
         "netssid",
         "netpass",
         "errdet",
+        "apmode",
     };
 
     /* register handlers and start the server */

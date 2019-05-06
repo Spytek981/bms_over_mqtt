@@ -70,7 +70,9 @@ static void  mqtt_task(void *pvParameters)
 
     while(1) 
     {
+        printf("MQTT taking semaphore\n");
         xSemaphoreTake(wifi_alive, portMAX_DELAY);
+        printf("MqTT taking semaphore - SUCCES\n");
         printf("%s: started\n\r", __func__);
         printf("%s: (Re)connecting to MQTT server %s ... ",__func__,
                MQTT_HOST);
@@ -145,7 +147,7 @@ static void  mqtt_task(void *pvParameters)
 int MQTT_init(void)
 {
     printf("MQTT_init()\n");
-    if(xTaskCreate(&mqtt_task, "mqtt_task", 1024, NULL, 4, NULL) == pdPASS)
+    if(xTaskCreate(&mqtt_task, "mqtt_task", 1024, NULL, 2, NULL) == pdPASS)
         return true;
     else
         return false;
