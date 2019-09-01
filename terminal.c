@@ -20,21 +20,42 @@
 #include "terminal.h"
 #include "datamanager.h"
 
+
 #define MAX_ARGC (10)
 
 #define PROMPT "CMD> "
 
 extern QueueHandle_t publish_queue;
+static void cmd_help(uint32_t argc, char *argv[]);
+static void cmd_mqttSendMessage(uint32_t argc, char *argv[]);
+static void cmd_reboot(uint32_t argc, char *argv[]);
+static void cmd_printSpineDAta(uint32_t argc, char *argv[]);
+static void cmd_setSpineData(uint32_t argc, char *argv[]);
 
 
+
+static struct CMD_dictionary 
+{
+    uint8_t cmdName[16];
+    void (*cmdHandler)(uint32_t argc, char*argv[]);
+};
+
+static struct CMD_dictionary CMDdict[]=
+{
+    "help", &cmd_help,
+    "sl", &cmd_mqttSendMessage,
+    "reboot", &cmd_reboot,
+    "psdata", &cmd_printSpineDAta,
+    "ssdata", &cmd_setSpineData,
+
+};
+#define CMD_DICT_SIZE (sizeof(CMDdict)/sizeof(struct CMD_dictionary))
 static void cmd_help(uint32_t argc, char *argv[])
 {
-    printf("on <gpio number> [ <gpio number>]+     Set gpio to 1\n");
-    printf("off <gpio number> [ <gpio number>]+    Set gpio to 0\n");
-    printf("sleep                                  Take a nap\n");
-    printf("\nExample:\n");
-    printf("  on 0<enter> switches on gpio 0\n");
-    printf("  on 0 2 4<enter> switches on gpios 0, 2 and 4\n");
+    for(uint8_t idx = 0; idx < CMD_DICT_SIZE; idx++)
+    {
+        printf("%d. %s\n", idx+1, CMDdict[idx].cmdName);
+    }
 }
 
 static void cmd_mqttSendMessage(uint32_t argc, char *argv[])
@@ -76,23 +97,8 @@ static void cmd_setSpineData(uint32_t argc, char *argv[])
     
 }
 
-static struct CMD_dictionary 
-{
-    uint8_t cmdName[16];
-    void (*cmdHandler)(uint32_t argc, char*argv[]);
-};
 
-static struct CMD_dictionary CMDdict[]=
-{
-    "help", &cmd_help,
-    "sl", &cmd_mqttSendMessage,
-    "reboot", &cmd_reboot,
-    "psdata", &cmd_printSpineDAta,
-    "ssdata", &cmd_setSpineData,
 
-};
-
-#define CMD_DICT_SIZE (sizeof(CMDdict)/sizeof(struct CMD_dictionary))
 
 static void handle_command(char *cmd)
 {
@@ -176,7 +182,7 @@ static void terminal_task()
 int TERMINAL_init(void)
 {
     printf("TERMINAL_init()\n");
-    if(xTaskCreate(&terminal_task, "terminal_task", 256, NULL, 3, NULL) == pdPASS)
+    if(xTaskCreate(&terminal_task, "terminal_task", 1024, NULL, 3, NULL) == pdPASS)
         return true;
     else
         return false;

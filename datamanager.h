@@ -9,6 +9,16 @@
         uint8_t password[64]; /* Null terminated string */
         uint8_t name[32];
         uint8_t wifiMode;     // 0 - ap / 1 - client
+        uint8_t uid[16];
+        uint32_t groups;
+        uint8_t event_onClose_topic[16];
+        uint8_t event_onClose_msg[16];
+        uint8_t event_onOpen_topic[16];
+        uint8_t event_onOpen_msg[16];
+
+
+        
+
     }TSpineConfigDataStruct;
 
     void DATAMANAGER_init(void);

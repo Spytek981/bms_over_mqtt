@@ -7,7 +7,7 @@ SPIFFS_SIZE = 0x010000
 
 #include ../../esp-open-rtos/common.mk
 include ../../esp-open-rtos/myCommon.mk
-
+$(eval $(call make_spiffs_image,files))
 
 
 #Enable debugging
