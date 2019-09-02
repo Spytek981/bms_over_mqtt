@@ -13,6 +13,9 @@
 #include "datamanager.h"
 #define buildingID "91addab8-c059-11e9-9cb5-2a2ae2dbcce4"
 
+static char* cliTopic[128];
+static char* groupTopic[128];
+
 mqtt_client_t client = mqtt_client_default;
 
 extern SemaphoreHandle_t wifi_alive;
@@ -114,7 +117,6 @@ static void mqtt_task(void *pvParameters)
             taskYIELD();
             continue;
         }
-        static char cliTopic[128];
         TSpineConfigDataStruct spineData;
         DATAMANAGER_getSpineData(&spineData);
         sprintf(cliTopic, "%s/%s/%s/cmd/", BASE_TOPIC, buildingID, get_my_id());
@@ -129,8 +131,8 @@ static void mqtt_task(void *pvParameters)
         {
             printf("SUCCESS!\n");
         }
-        // sprintf(cliTopic, "%s/%s/group/#", BASE_TOPIC, buildingID);
-        printf("Subscribing to GROUP topic '%s' ", cliTopic);
+        sprintf(groupTopic, "%s/%s/group/#", BASE_TOPIC, buildingID);
+        printf("Subscribing to GROUP topic '%s' ", groupTopic);
         if (mqtt_subscribe(&client, BASE_TOPIC"/"buildingID"/group/#", MQTT_QOS1, group_cmd_parser) != MQTT_SUCCESS)
         {
             printf("FAILED!!!!\n");
@@ -264,7 +266,9 @@ static void cmd_resetout(uint32_t argc, char *argv[]);
 static void cmd_resetout(uint32_t argc, char *argv[]);
 static void cmd_getconfig(uint32_t argc, char *argv[]);
 static void cmd_setconfig(uint32_t argc, char *argv[]);
-
+static void cmd_addToGroup(uint32_t argc, char *argv[]);
+static void cmd_removeFromGroup(uint32_t argc, char *argv[]);
+static void cmd_setGroups(uint32_t argc, char *argv[]);
 
 
 static struct CMD_dictionary CMDdict[]=
@@ -273,6 +277,9 @@ static struct CMD_dictionary CMDdict[]=
     "RESETOUT", cmd_resetout,
     "GETCFG", cmd_getconfig,
     "SETCFG", cmd_setconfig,
+    "ADDGROUP", cmd_addToGroup,
+    "REMGROUP", cmd_removeFromGroup,
+    "SETGROUP", cmd_setGroups,
 };
 #define CMD_DICT_SIZE (sizeof(CMDdict)/sizeof(struct CMD_dictionary))
 
@@ -356,6 +363,83 @@ static void cmd_setconfig(uint32_t argc, char *argv[])
     mqtt_cmd_answer("OK");
 
 }
+
+static void cmd_addToGroup(uint32_t argc, char *argv[])
+{
+    printf("%s\n", __func__);
+    
+    
+    if(argc != 2)
+    {
+        printf("bad arguments\n");
+        mqtt_cmd_answer("ERROR - > Bad arguments");
+        return;
+    }
+    TSpineConfigDataStruct newConcig;
+    uint8_t groupNo;
+    sscanf(argv[1], "%d", &groupNo);
+    if(groupNo >= 1 && groupNo <= 32 )
+    {
+        DATAMANAGER_getSpineData(&newConcig);
+        newConcig.groups |= 1<<(groupNo-1);
+        DATAMANAGER_setSpineData(&newConcig);
+        mqtt_cmd_answer("OK");
+    }
+    else
+    {
+        mqtt_cmd_answer("ERROR -> bad group number");
+    }
+}
+
+static void cmd_removeFromGroup(uint32_t argc, char *argv[])
+{
+    printf("%s\n", __func__);
+    if(argc != 2)
+    {
+        printf("bad arguments\n");
+        mqtt_cmd_answer("ERROR - > Bad arguments");
+        return;
+    }
+    TSpineConfigDataStruct newConcig;
+    uint8_t groupNo;
+    sscanf(argv[1], "%d", &groupNo);
+    if(groupNo >= 1 && groupNo <= 32 )
+    {
+        DATAMANAGER_getSpineData(&newConcig);
+        newConcig.groups &= ~(1<<(groupNo-1));
+        DATAMANAGER_setSpineData(&newConcig);
+        mqtt_cmd_answer("OK");
+    }
+    else
+    {
+        mqtt_cmd_answer("ERROR -> bad group number");
+    }
+}
+static void cmd_setGroups(uint32_t argc, char *argv[])
+{
+    printf("%s\n", __func__);
+    if(argc != 2)
+    {
+        printf("bad arguments\n");
+        mqtt_cmd_answer("ERROR - > Bad arguments");
+        return;
+    }
+    TSpineConfigDataStruct newConcig;
+    uint32_t groupNo;
+    sscanf(argv[1], "%d", &groupNo);
+    // if(groupNo >= 1 && groupNo <= 32 )
+    {
+        DATAMANAGER_getSpineData(&newConcig);
+        newConcig.groups = groupNo;
+        DATAMANAGER_setSpineData(&newConcig);
+        mqtt_cmd_answer("OK");
+    }
+    // else
+    // {
+    //     mqtt_cmd_answer("ERROR -> bad group number");
+    // }
+}
+
 
 static char* getptrtofirsttag(char * text)
 {
