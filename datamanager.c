@@ -10,8 +10,15 @@
 #include "esp_spiffs.h"
 #include "utils.h"
 #include "datamanager.h"
-TSpineConfigDataStruct SpineData;
+#include <timers.h>
+#include "mqtt.h"
 
+#define FIRMWARE_VERSION (0.1)
+TSpineConfigDataStruct SpineData;
+TimerHandle_t timer_cyclicDataSender;
+extern QueueHandle_t publish_queue;
+
+void DATAMANAGER_cyclicSendSpineData_clbk(TimerHandle_t xTimer);
 
 static void spineData_init(TSpineConfigDataStruct *spineData)
 {
@@ -25,25 +32,43 @@ static void spineData_init(TSpineConfigDataStruct *spineData)
     strcpy(spineData->event_onClose_msg, "");
     strcpy(spineData->event_onOpen_topic, "");
     strcpy(spineData->event_onOpen_msg, "");
-    spineData->groups = 0x0001;
+    strcpy(spineData->buildingId, "00000000-0000-0000-0000-000000000000");
+    spineData->groups = 0x0000;
 }
 
 void DATAMANAGER_init(void)
 {
     printf("%s\n", __func__);
     esp_spiffs_init();
-    if (esp_spiffs_mount() != SPIFFS_OK) {
+    if (esp_spiffs_mount() != SPIFFS_OK)
+    {
         printf("Error mount SPIFFS\n");
     }
-    if(!DATAMANAGER_readSpineData())
+    if (!DATAMANAGER_readSpineData())
     // if(1)
     {
         printf("Failed to read configuration. Init with default data, and save to file!\n");
         spineData_init(&SpineData);
         DATAMANAGER_saveSpineData();
     }
-
-    return;
+    //init software timer to cyclic sending data
+    
+    timer_cyclicDataSender = xTimerCreate(
+        "SpineData_cyclic_sender",
+        pdMS_TO_TICKS(10000),
+        pdTRUE,
+        (void *)0,
+        DATAMANAGER_cyclicSendSpineData_clbk);
+    if(timer_cyclicDataSender == NULL)
+    {
+        printf("timer_cyclicDataSender init FAILED!!!!!");
+    }
+    else
+    {
+        printf("timer_cyclicDataSender init OK. Starting\n");
+        xTimerStart(timer_cyclicDataSender, 0);
+    }
+    
 }
 
 void DATAMANAGER_printSpineData(void)
@@ -60,7 +85,7 @@ void DATAMANAGER_printSpineData(void)
     printf("groups: 0x%08X\n", SpineData.groups);
 }
 
-int8_t DATAMANAGER_setSpineData(TSpineConfigDataStruct *newdata )
+int8_t DATAMANAGER_setSpineData(TSpineConfigDataStruct *newdata)
 {
     memcpy(&SpineData, newdata, sizeof(TSpineConfigDataStruct));
     printf("%s - new data saved!\n", __func__);
@@ -69,7 +94,7 @@ int8_t DATAMANAGER_setSpineData(TSpineConfigDataStruct *newdata )
     return true;
 };
 
-int8_t DATAMANAGER_getSpineData(TSpineConfigDataStruct *dataContainer )
+int8_t DATAMANAGER_getSpineData(TSpineConfigDataStruct *dataContainer)
 {
     memcpy(dataContainer, &SpineData, sizeof(TSpineConfigDataStruct));
     printf("%s - data readed!\n", __func__);
@@ -80,8 +105,9 @@ int8_t DATAMANAGER_saveSpineData(void)
 {
     printf("%s\n", __func__);
 
-    int fd = open(SPINE_DATA_FILE_NAME, O_WRONLY|O_CREAT, 0);
-    if (fd < 0) {
+    int fd = open(SPINE_DATA_FILE_NAME, O_WRONLY | O_CREAT, 0);
+    if (fd < 0)
+    {
         printf("Error opening file %s\n", SPINE_DATA_FILE_NAME);
         return false;
     }
@@ -97,7 +123,8 @@ int8_t DATAMANAGER_readSpineData(void)
     printf("%s\n", __func__);
 
     int fd = open(SPINE_DATA_FILE_NAME, O_RDONLY, 0);
-    if (fd < 0) {
+    if (fd < 0)
+    {
         printf("Error opening file %s\n", SPINE_DATA_FILE_NAME);
         return false;
     }
@@ -112,4 +139,29 @@ int8_t DATAMANAGER_readSpineData(void)
 int8_t DATAMANAGER_getWiFiMode(void)
 {
     return SpineData.wifiMode;
+}
+
+void DATAMANAGER_cyclicSendSpineData_clbk(TimerHandle_t xTimer)
+{
+    
+    printf("%s - sending!\n", __func__);
+    TSpineConfigDataStruct actualConfig;
+    DATAMANAGER_getSpineData(&actualConfig);
+    
+    char ActualConfigStr[256];
+    sprintf(
+        ActualConfigStr, 
+        "{\"status\":%u,\"ssid\":\"%s\",\"password\":\"%s\",\"name\":\"%s\",\"wifiMode\":%d,\"uid\":\"%s\",\"version\":\"%1.2f\"}",
+        actualConfig.statusRegister,
+        actualConfig.ssid,
+        actualConfig.password,
+        actualConfig.name,
+        actualConfig.wifiMode,
+        get_my_id(),
+        FIRMWARE_VERSION
+    );
+    mqttMessageContainer message;
+    sprintf(message.messageTopic, "%s/broadcast/%s/status/", BASE_TOPIC, get_my_id());
+    sprintf(message.messagePayload, "%s", ActualConfigStr);
+    xQueueSend(publish_queue, &message, 100);
 }

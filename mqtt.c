@@ -11,10 +11,11 @@
 #include <string.h>
 #include "utils.h"
 #include "datamanager.h"
-#define buildingID "91addab8-c059-11e9-9cb5-2a2ae2dbcce4"
+#define buildingID "00000000-0000-0000-0000-000000000000"
 
 static char* cliTopic[128];
 static char* groupTopic[128];
+static char* lastWillTopic[128];
 
 mqtt_client_t client = mqtt_client_default;
 
@@ -76,6 +77,13 @@ static void mqtt_task(void *pvParameters)
     uint8_t mqtt_buf[512];
     uint8_t mqtt_readbuf[512];
     mqtt_packet_connect_data_t data = mqtt_packet_connect_data_initializer;
+    
+    sprintf(lastWillTopic, "%s/%s/%s/status/", BASE_TOPIC, buildingID, get_my_id());
+    data.will.message.cstring = "dead";
+    data.will.qos = 1;
+    data.will.topicName.cstring = lastWillTopic;
+    
+
 
     mqtt_network_new(&network);
     memset(mqtt_client_id, 0, sizeof(mqtt_client_id));
@@ -101,7 +109,7 @@ static void mqtt_task(void *pvParameters)
         mqtt_client_new(&client, &network, 5000, mqtt_buf, 512,
                         mqtt_readbuf, 512);
 
-        data.willFlag = 0;
+        data.willFlag = 1;
         data.MQTTVersion = 3;
         data.clientID.cstring = mqtt_client_id;
         data.username.cstring = MQTT_USER;
@@ -173,6 +181,7 @@ static void mqtt_task(void *pvParameters)
                     break;
                 }
             }
+            // printf("MQTT TICK\n");
 
             ret = mqtt_yield(&client, 100);
             if (ret == MQTT_DISCONNECTED)

@@ -4,9 +4,24 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/media/spytek/home/home_old/spytek/programming/esp-open-rtos/**",
-                "/media/spytek/home/home_old/spytek/programming/esp-open-sdk/**",
-                "/media/spytek/home/home_old/spytek/programming/esp-open-rtos/include/**"
+                "/home/home_old/spytek/programming/esp-open-rtos/**",
+                "/home/home_old/spytek/programming/esp-open-rtos/FreeRTOS/Source/portable/esp8266",
+                "/home/home_old/spytek/programming/esp-open-rtos/tests/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/FreeRTOS/Source/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/libc/xtensa-lx106-elf/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/open_esplibs/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/extras/cpp_support/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/extras/mbedtls/mbedtls/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/extras/mbedtls/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/extras/dhcpserver/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/extras/libesphttpd/libesphttpd/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/lwip/lwip/src/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/lwip/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/core/include",
+                "/home/home_old/spytek/programming/esp-open-rtos/examples/http_get_mbedtls/include",
+                "/home/home_old/spytek/programming/esp-open-sdk/xtensa-lx106-elf/sysroot/usr/include"
+
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

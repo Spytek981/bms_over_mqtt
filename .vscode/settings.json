@@ -1,2 +1,18 @@
 {
+    "files.associations": {
+        "esp_common.h": "c",
+        "freertos.h": "c",
+        "string.h": "c",
+        "esp_system.h": "c",
+        "esp8266.h": "c",
+        "esp_timer.h": "c",
+        "gpio.h": "c",
+        "mqtt.h": "c",
+        "ssid_config.h": "c",
+        "task.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Enabled",
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true
 }

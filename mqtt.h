@@ -5,9 +5,9 @@
 
     #define MQTT_HOST ("80.211.230.246")
     #define MQTT_PORT 1883
-    #define BASE_TOPIC "/spytek/testy"
-    #define MQTT_USER "userNAme"
-    #define MQTT_PASS "userPAss"
+    #define BASE_TOPIC "/spine"
+    #define MQTT_USER "userName"
+    #define MQTT_PASS "userPass"
     #define PUB_MSG_LEN 256
 
     typedef struct mqttMessageContainer

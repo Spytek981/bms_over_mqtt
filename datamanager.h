@@ -5,6 +5,7 @@
     typedef struct
     {
         uint32_t statusRegister;
+        uint8_t buildingId[37];
         uint8_t ssid[32];     /* Null terminated string */
         uint8_t password[64]; /* Null terminated string */
         uint8_t name[32];
@@ -15,10 +16,6 @@
         uint8_t event_onClose_msg[16];
         uint8_t event_onOpen_topic[16];
         uint8_t event_onOpen_msg[16];
-
-
-        
-
     }TSpineConfigDataStruct;
 
     void DATAMANAGER_init(void);
