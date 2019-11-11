@@ -127,7 +127,7 @@ static void mqtt_task(void *pvParameters)
         }
         TSpineConfigDataStruct spineData;
         DATAMANAGER_getSpineData(&spineData);
-        sprintf(cliTopic, "%s/%s/%s/cmd/", BASE_TOPIC, buildingID, get_my_id());
+        sprintf(cliTopic, "%s/broadcast/%s/cmd/", BASE_TOPIC, get_my_id());
         printf("Subscribing to CLI topic '%s' ", cliTopic);
         if (mqtt_subscribe(&client, cliTopic, MQTT_QOS1, topic_received) != MQTT_SUCCESS)
         {
@@ -263,7 +263,7 @@ void mqtt_cmd_answer(char *msg_answer)
 {
     mqttMessageContainer message;
     
-    sprintf(message.messageTopic, "%s/%s/%s/ans/", BASE_TOPIC, buildingID, get_my_id());
+    sprintf(message.messageTopic, "%s/%s/%s/ans/", BASE_TOPIC, "broadcast", get_my_id());
     sprintf(message.messagePayload, "%s", msg_answer);
     xQueueSend(publish_queue, &message, 100);
 }
@@ -349,25 +349,35 @@ static void cmd_setconfig(uint32_t argc, char *argv[])
     
     if(argc != 11)
     {
-        printf("bad arguments\n");
+        printf("bad arguments - is %d \n", argc);
         mqtt_cmd_answer("ERROR - > Bad arguments");
         return;
     }
     TSpineConfigDataStruct newConcig;
-    sscanf(argv[1], "%d", &newConcig.statusRegister);
+    DATAMANAGER_getSpineData(&newConcig);
+    // sscanf(argv[1], "%d", &newConcig.statusRegister);
+    // printf("status %d\n",newConcig.statusRegister);
     sscanf(argv[2], "%s", &newConcig.ssid);
+    printf("ssid %s\n",newConcig.ssid);
     sscanf(argv[3], "%s", &newConcig.password);
+    printf("pass %s\n",newConcig.password);
     sscanf(argv[4], "%s", &newConcig.name);
+    printf("name %s\n",newConcig.name);
+    printf("wifi1 %u\n",newConcig.wifiMode);
     sscanf(argv[5], "%d", &newConcig.wifiMode);
-    printf("%s\n",argv[7]);
-    sscanf(argv[6], "%x", &newConcig.groups);
-    
-    printf("%s\n",argv[8]);
-    sscanf(argv[7], "%s", newConcig.event_onClose_topic);
-    
+    printf("wifi2 %u\n",newConcig.wifiMode);
+    // printf("%s\n",argv[6]);
+    sscanf(argv[6], "%lu", &newConcig.groups);
+    printf("groups %lu\n",newConcig.groups);
+     
+    sscanf(argv[7], "%s", &newConcig.event_onClose_topic);
+    printf("event_onClose_topic %s\n",newConcig.event_onClose_topic);
     sscanf(argv[8], "%s", &newConcig.event_onClose_msg);
+    printf("event_onClose_msg %s\n",newConcig.event_onClose_msg);
     sscanf(argv[9], "%s", &newConcig.event_onOpen_topic);
+    printf("event_onOpen_topic %s\n",newConcig.event_onOpen_topic);
     sscanf(argv[10], "%s", &newConcig.event_onOpen_msg);
+    printf("event_onOpen_msg %s\n",newConcig.event_onOpen_msg);
     DATAMANAGER_setSpineData(&newConcig);
     mqtt_cmd_answer("OK");
 

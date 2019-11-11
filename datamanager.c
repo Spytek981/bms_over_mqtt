@@ -55,7 +55,7 @@ void DATAMANAGER_init(void)
     
     timer_cyclicDataSender = xTimerCreate(
         "SpineData_cyclic_sender",
-        pdMS_TO_TICKS(10000),
+        pdMS_TO_TICKS(30000),
         pdTRUE,
         (void *)0,
         DATAMANAGER_cyclicSendSpineData_clbk);
@@ -151,14 +151,15 @@ void DATAMANAGER_cyclicSendSpineData_clbk(TimerHandle_t xTimer)
     char ActualConfigStr[256];
     sprintf(
         ActualConfigStr, 
-        "{\"status\":%u,\"ssid\":\"%s\",\"password\":\"%s\",\"name\":\"%s\",\"wifiMode\":%d,\"uid\":\"%s\",\"version\":\"%1.2f\"}",
+        "{\"status\":%u,\"ssid\":\"%s\",\"password\":\"%s\",\"name\":\"%s\",\"wifiMode\":%d,\"uid\":\"%s\",\"version\":\"%1.2f\",\"groups\":%d}",
         actualConfig.statusRegister,
         actualConfig.ssid,
         actualConfig.password,
         actualConfig.name,
         actualConfig.wifiMode,
         get_my_id(),
-        FIRMWARE_VERSION
+        FIRMWARE_VERSION,
+        actualConfig.groups
     );
     mqttMessageContainer message;
     sprintf(message.messageTopic, "%s/broadcast/%s/status/", BASE_TOPIC, get_my_id());

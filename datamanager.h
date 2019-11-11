@@ -4,12 +4,12 @@
     #define SPINE_DATA_FILE_NAME ("spinedata.bin")
     typedef struct
     {
+        uint8_t name[32];
         uint32_t statusRegister;
         uint8_t buildingId[37];
         uint8_t ssid[32];     /* Null terminated string */
         uint8_t password[64]; /* Null terminated string */
-        uint8_t name[32];
-        uint8_t wifiMode;     // 0 - ap / 1 - client
+        uint32_t wifiMode;     // 0 - ap / 1 - client
         uint8_t uid[16];
         uint32_t groups;
         uint8_t event_onClose_topic[16];
