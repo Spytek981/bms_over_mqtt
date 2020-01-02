@@ -3,7 +3,8 @@
 #include <paho_mqtt_c/MQTTESP8266.h>
 #include <paho_mqtt_c/MQTTClient.h>
 
-    #define MQTT_HOST ("80.211.230.246")
+    // #define MQTT_HOST ("80.211.230.246")
+    #define MQTT_HOST ("192.168.1.100")
     #define MQTT_PORT 1883
     #define BASE_TOPIC "/spine"
     #define MQTT_USER "userName"
@@ -19,4 +20,5 @@
 
     int MQTT_init(void);
     int mqtt_spine_send_event(int eventValue);
+    void mqtt_send_to_group(char *msg_payload);
 #endif

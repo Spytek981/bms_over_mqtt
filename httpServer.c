@@ -35,7 +35,8 @@ int32_t ssi_handler(int32_t iIndex, char *pcInsert, int32_t iInsertLen)
             TSpineConfigDataStruct tempData;
             if(DATAMANAGER_getSpineData(&tempData))
             {
-                snprintf(pcInsert, iInsertLen, tempData.name);
+                // snprintf(pcInsert, iInsertLen, tempData.name);
+                snprintf(pcInsert, iInsertLen, "test");
             }
             else
             {

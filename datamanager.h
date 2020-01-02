@@ -11,12 +11,10 @@
         uint8_t password[64]; /* Null terminated string */
         uint32_t wifiMode;     // 0 - ap / 1 - client
         uint8_t uid[16];
-        uint32_t groups;
-        uint8_t event_onClose_topic[16];
-        uint8_t event_onClose_msg[16];
-        uint8_t event_onOpen_topic[16];
-        uint8_t event_onOpen_msg[16];
-    }TSpineConfigDataStruct;
+        uint32_t output_groups; //Wyjście może byc sterowane z wielu grup
+        unsigned int input_group;    //Wejscie moze sterowac tylko jedną grupą
+        unsigned int inputMode;      //Tryb pracy wejścia 0 - monostable, 1 - bistable
+    }TSpineConfigDataStruct __attribute__((packed));
 
     void DATAMANAGER_init(void);
     void DATAMANAGER_printSpineData(void);
@@ -25,6 +23,8 @@
     int8_t DATAMANAGER_saveSpineData(void);
     int8_t DATAMANAGER_readSpineData(void);
     int8_t DATAMANAGER_getWiFiMode(void);
+    uint32_t DATAMANAGER_getSpineStatus(void);
+    void DATAMANAGER_setSpineStatusBit(uint8_t bit, uint8_t value);
 
 
 

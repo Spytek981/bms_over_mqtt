@@ -19,6 +19,7 @@
 #include "mqtt.h"
 #include "terminal.h"
 #include "datamanager.h"
+#include "wifi.h"
 
 
 #define MAX_ARGC (10)
@@ -31,7 +32,8 @@ static void cmd_mqttSendMessage(uint32_t argc, char *argv[]);
 static void cmd_reboot(uint32_t argc, char *argv[]);
 static void cmd_printSpineDAta(uint32_t argc, char *argv[]);
 static void cmd_setSpineData(uint32_t argc, char *argv[]);
-
+static void cmd_setOut(uint32_t argc, char *argv[]);
+static void cmd_scan(uint32_t argc, char *argv[]);
 
 
 static struct CMD_dictionary 
@@ -47,6 +49,8 @@ static struct CMD_dictionary CMDdict[]=
     "reboot", &cmd_reboot,
     "psdata", &cmd_printSpineDAta,
     "ssdata", &cmd_setSpineData,
+    "setout", &cmd_setOut,
+    "scan", &cmd_scan,
 
 };
 #define CMD_DICT_SIZE (sizeof(CMDdict)/sizeof(struct CMD_dictionary))
@@ -95,6 +99,26 @@ static void cmd_setSpineData(uint32_t argc, char *argv[])
         DATAMANAGER_setSpineData(&configData);
     }
     
+}
+
+static void cmd_setOut(uint32_t argc, char *argv[])
+{
+    
+    if(argc < 1)
+    {
+        printf("Not enough arguments. \n");
+        return;
+    }
+    else
+    {
+        printf("Set out %d\n", atoi(argv[1]));
+        IO_setOut(atoi(argv[1]));
+    }
+}
+
+static void cmd_scan(uint32_t argc, char *argv[])
+{
+    WIFI_scanNetwork();
 }
 
 

@@ -11,23 +11,7 @@
 
 extern SemaphoreHandle_t wifi_alive;
 
-// void startWifiAP(void)
-// {
-//     uart_set_baud(0, 115200);
-//     printf("SDK version:%s\n", sdk_system_get_sdk_version());
 
-//     sdk_wifi_set_opmode(SOFTAP_MODE);
-//     struct ip_info ap_ip;
-//     IP4_ADDR(&ap_ip.ip, 172, 16, 0, 1);
-//     IP4_ADDR(&ap_ip.gw, 0, 0, 0, 0);
-//     IP4_ADDR(&ap_ip.netmask, 255, 255, 0, 0);
-//     sdk_wifi_set_ip_info(1, &ap_ip);
-
-//     struct sdk_softap_config ap_config = { .ssid = AP_SSID, .ssid_hidden = 0, .channel = 3, .ssid_len = strlen(AP_SSID), .authmode =
-//             AUTH_WPA_WPA2_PSK, .password = AP_PSK, .max_connection = 3, .beacon_interval = 100, };
-    // sdk_wifi_softap_set_config(&ap_config);
-
-// }
 static void  wifi_task(void *pvParameters)
 {
     uint8_t status  = 0;
@@ -73,6 +57,7 @@ static void  wifi_task(void *pvParameters)
             }
             if (status == STATION_GOT_IP) {
                 printf("WiFi: Connected\n\r");
+                DATAMANAGER_setSpineStatusBit(0, 1);
                 xSemaphoreGive( wifi_alive );
                 taskYIELD();
             }
@@ -82,6 +67,7 @@ static void  wifi_task(void *pvParameters)
                 taskYIELD();
             }
             printf("WiFi: disconnected\n\r");
+            DATAMANAGER_setSpineStatusBit(0, 0);
             sdk_wifi_station_disconnect();
             goto connection_failed;
             vTaskDelay( 1000 / portTICK_PERIOD_MS );
@@ -123,6 +109,83 @@ static void  wifi_task(void *pvParameters)
         
     }
     
+}
+static const char * const auth_modes [] = {
+    [AUTH_OPEN]         = "Open",
+    [AUTH_WEP]          = "WEP",
+    [AUTH_WPA_PSK]      = "WPA/PSK",
+    [AUTH_WPA2_PSK]     = "WPA2/PSK",
+    [AUTH_WPA_WPA2_PSK] = "WPA/WPA2/PSK"
+};
+static void scan_done_cb(void *arg, sdk_scan_status_t status)
+{
+    char ssid[33]; // max SSID length + zero byte
+
+    if (status != SCAN_OK)
+    {
+        printf("Error: WiFi scan failed\n");
+        return;
+    }
+
+    struct sdk_bss_info *bss = (struct sdk_bss_info *)arg;
+    // first one is invalid
+    bss = bss->next.stqe_next;
+
+    printf("\n----------------------------------------------------------------------------------\n");
+    printf("                             Wi-Fi networks\n");
+    printf("----------------------------------------------------------------------------------\n");
+
+    while (NULL != bss)
+    {
+        size_t len = strlen((const char *)bss->ssid);
+        memcpy(ssid, bss->ssid, len);
+        ssid[len] = 0;
+
+        printf("%32s (" MACSTR ") RSSI: %02d, security: %s\n", ssid,
+            MAC2STR(bss->bssid), bss->rssi, auth_modes[bss->authmode]);
+
+        bss = bss->next.stqe_next;
+    }
+}
+
+static void scan_done_cbNEW(void *arg, sdk_scan_status_t status)
+{
+    char ssid[33]; // max SSID length + zero byte
+
+    if (status != SCAN_OK)
+    {
+        printf("Error: WiFi scan failed\n");
+        return;
+    }
+
+    struct sdk_bss_info *bss = (struct sdk_bss_info *)arg;
+    // first one is invalid
+    bss = bss->next.stqe_next;
+
+    printf("\n----------------------------------------------------------------------------------\n");
+    printf("                             Wi-Fi networks\n");
+    printf("----------------------------------------------------------------------------------\n");
+
+    while (NULL != bss)
+    {
+        if(!strcmp(bss->ssid, "laserX"))
+        {
+            size_t len = strlen((const char *)bss->ssid);
+            memcpy(ssid, bss->ssid, len);
+            ssid[len] = 0;
+
+            printf("%s RSSI: %02d\n", ssid, bss->rssi);
+        }
+
+        bss = bss->next.stqe_next;
+    }
+}
+
+void WIFI_scanNetwork(void)
+{
+    printf("Start to scan network\n");
+    sdk_wifi_station_scan(NULL, scan_done_cbNEW);
+    printf("FInished scanning\n");
 }
 
 int WIFI_init(void)

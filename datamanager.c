@@ -26,14 +26,13 @@ static void spineData_init(TSpineConfigDataStruct *spineData)
     sprintf(spineData->name, "SPINE_%s", get_my_id());
     strcpy(spineData->ssid, "laserX");
     strcpy(spineData->password, "a1s2d3f4");
-    spineData->statusRegister = 0xA5A5A5A5;
+    spineData->statusRegister = 0x00;
     spineData->wifiMode = 1;
-    strcpy(spineData->event_onClose_topic, "");
-    strcpy(spineData->event_onClose_msg, "");
-    strcpy(spineData->event_onOpen_topic, "");
-    strcpy(spineData->event_onOpen_msg, "");
+
     strcpy(spineData->buildingId, "00000000-0000-0000-0000-000000000000");
-    spineData->groups = 0x0000;
+    spineData->output_groups = 0x0000;
+    spineData->input_group = 255;
+    spineData->inputMode = 0;
 }
 
 void DATAMANAGER_init(void)
@@ -51,6 +50,7 @@ void DATAMANAGER_init(void)
         spineData_init(&SpineData);
         DATAMANAGER_saveSpineData();
     }
+    SpineData.statusRegister = 0;
     //init software timer to cyclic sending data
     
     timer_cyclicDataSender = xTimerCreate(
@@ -73,16 +73,18 @@ void DATAMANAGER_init(void)
 
 void DATAMANAGER_printSpineData(void)
 {
+    printf("buildingId: %s\n", SpineData.buildingId);
     printf("name: %s\n", SpineData.name);
     printf("ssid: %s\n", SpineData.ssid);
     printf("password: %s\n", SpineData.password);
     printf("statusRegister: %08X\n", SpineData.statusRegister);
     printf("wifimode: %d\n", SpineData.wifiMode);
-    printf("event_onClose_topic: %s\n", SpineData.event_onClose_topic);
-    printf("event_onClose_msg: %s\n", SpineData.event_onClose_msg);
-    printf("event_onOpen_topic: %s\n", SpineData.event_onOpen_topic);
-    printf("event_onOpen_msg: %s\n", SpineData.event_onOpen_msg);
-    printf("groups: 0x%08X\n", SpineData.groups);
+    printf("input_group: %x\n", SpineData.input_group);
+    printf("inputMode: %d\n", SpineData.inputMode);
+    printf("output_groups: %x\n", SpineData.output_groups);
+
+    
+    
 }
 
 int8_t DATAMANAGER_setSpineData(TSpineConfigDataStruct *newdata)
@@ -99,6 +101,28 @@ int8_t DATAMANAGER_getSpineData(TSpineConfigDataStruct *dataContainer)
     memcpy(dataContainer, &SpineData, sizeof(TSpineConfigDataStruct));
     printf("%s - data readed!\n", __func__);
     return true;
+}
+
+uint32_t DATAMANAGER_getSpineStatus(void)
+{
+    // memcpy(dataContainer, &SpineData, sizeof(TSpineConfigDataStruct));//
+
+    
+    return SpineData.statusRegister;
+}
+
+void DATAMANAGER_setSpineStatusBit(uint8_t bit, uint8_t value)
+{
+    // memcpy(dataContainer, &SpineData, sizeof(TSpineConfigDataStruct));//
+    if(value)
+    {
+        SpineData.statusRegister |= 1<<bit;
+    }
+    else
+    {
+        SpineData.statusRegister &= ~(1<<bit);
+    }
+
 }
 
 int8_t DATAMANAGER_saveSpineData(void)
@@ -151,7 +175,7 @@ void DATAMANAGER_cyclicSendSpineData_clbk(TimerHandle_t xTimer)
     char ActualConfigStr[256];
     sprintf(
         ActualConfigStr, 
-        "{\"status\":%u,\"ssid\":\"%s\",\"password\":\"%s\",\"name\":\"%s\",\"wifiMode\":%d,\"uid\":\"%s\",\"version\":\"%1.2f\",\"groups\":%d}",
+        "{\"status\":%u,\"ssid\":\"%s\",\"password\":\"%s\",\"name\":\"%s\",\"wifiMode\":%d,\"uid\":\"%s\",\"version\":\"%1.2f\",\"output_groups\":%u,\"input_group\":%u,\"inputMode\":%u,\"buildingId\":\"%s\"}",
         actualConfig.statusRegister,
         actualConfig.ssid,
         actualConfig.password,
@@ -159,7 +183,10 @@ void DATAMANAGER_cyclicSendSpineData_clbk(TimerHandle_t xTimer)
         actualConfig.wifiMode,
         get_my_id(),
         FIRMWARE_VERSION,
-        actualConfig.groups
+        actualConfig.output_groups,
+        actualConfig.input_group,
+        actualConfig.inputMode,
+        actualConfig.buildingId
     );
     mqttMessageContainer message;
     sprintf(message.messageTopic, "%s/broadcast/%s/status/", BASE_TOPIC, get_my_id());

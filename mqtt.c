@@ -7,10 +7,11 @@
 #include <event_groups.h>
 #include "io.h"
 #include "wifi.h"
+#include "datamanager.h"
 #include "mqtt.h"
 #include <string.h>
 #include "utils.h"
-#include "datamanager.h"
+
 #define buildingID "00000000-0000-0000-0000-000000000000"
 
 static char* cliTopic[128];
@@ -51,10 +52,13 @@ static void group_cmd_parser(mqtt_message_data_t *md)
         int groupNo = 0;
         sscanf(grNoStr, "%2d", &groupNo);
         printf("Command for groupNo %02d\n", groupNo);
-        if(1<<(groupNo-1) & spineData.groups)
+        if(1<<(groupNo-1) & spineData.output_groups)
         {
             mqtt_message_t *message = md->message;
-            handle_command(md->message->payload);
+            char payloadContainer[128] = {0};
+            memcpy(&payloadContainer, md->message->payload, md->message->payloadlen);
+            // printf("MESSAGE CONTAINER: %s -> %s\n", md->message->payload, payloadContainer);
+            handle_command(payloadContainer);
         }
         else
         {
@@ -87,7 +91,8 @@ static void mqtt_task(void *pvParameters)
 
     mqtt_network_new(&network);
     memset(mqtt_client_id, 0, sizeof(mqtt_client_id));
-    strcpy(mqtt_client_id, "ESP-SPYTOROWE");
+    // strcpy(mqtt_client_id, "SPINE-%s");
+    sprintf(mqtt_client_id, "SPINE-%s", get_my_id());
     // .strcat(mqtt_client_id, get_my_id());
 
     while (1)
@@ -106,6 +111,7 @@ static void mqtt_task(void *pvParameters)
             continue;
         }
         printf("done\n\r");
+        
         mqtt_client_new(&client, &network, 5000, mqtt_buf, 512,
                         mqtt_readbuf, 512);
 
@@ -115,7 +121,7 @@ static void mqtt_task(void *pvParameters)
         data.username.cstring = MQTT_USER;
         data.password.cstring = MQTT_PASS;
         data.keepAliveInterval = 10;
-        data.cleansession = 0;
+        data.cleansession = 1;
         printf("Send MQTT connect ... ");
         ret = mqtt_connect(&client, &data);
         if (ret)
@@ -125,6 +131,7 @@ static void mqtt_task(void *pvParameters)
             taskYIELD();
             continue;
         }
+        DATAMANAGER_setSpineStatusBit(1, 1);
         TSpineConfigDataStruct spineData;
         DATAMANAGER_getSpineData(&spineData);
         sprintf(cliTopic, "%s/broadcast/%s/cmd/", BASE_TOPIC, get_my_id());
@@ -188,6 +195,7 @@ static void mqtt_task(void *pvParameters)
                 break;
         }
         printf("Connection dropped, request restart\n\r");
+        DATAMANAGER_setSpineStatusBit(1, 0);
         mqtt_network_disconnect(&network);
         taskYIELD();
     }
@@ -259,6 +267,17 @@ int mqtt_spine_send_event(int eventValue)
     return 0;
 }
 
+void mqtt_send_to_group(char *msg_payload)
+{
+    mqttMessageContainer message;
+    TSpineConfigDataStruct spineData;
+    DATAMANAGER_getSpineData(&spineData);
+    
+    sprintf(message.messageTopic, "%s/%s/group/%d", BASE_TOPIC, buildingID, spineData.input_group);
+    sprintf(message.messagePayload, "%s", msg_payload);
+    xQueueSend(publish_queue, &message, 100);
+}
+
 void mqtt_cmd_answer(char *msg_answer)
 {
     mqttMessageContainer message;
@@ -278,7 +297,8 @@ static void cmd_setconfig(uint32_t argc, char *argv[]);
 static void cmd_addToGroup(uint32_t argc, char *argv[]);
 static void cmd_removeFromGroup(uint32_t argc, char *argv[]);
 static void cmd_setGroups(uint32_t argc, char *argv[]);
-
+static void cmd_setBuildingId(uint32_t argc, char *argv[]);
+static void cmd_ping(uint32_t argc, char *argv[]);
 
 static struct CMD_dictionary CMDdict[]=
 {
@@ -289,6 +309,7 @@ static struct CMD_dictionary CMDdict[]=
     "ADDGROUP", cmd_addToGroup,
     "REMGROUP", cmd_removeFromGroup,
     "SETGROUP", cmd_setGroups,
+    "PING", cmd_ping,
 };
 #define CMD_DICT_SIZE (sizeof(CMDdict)/sizeof(struct CMD_dictionary))
 
@@ -304,7 +325,7 @@ static void cmd_setout(uint32_t argc, char *argv[])
     // else
     // {
         IO_setOut(1);
-        mqtt_cmd_answer("Yeah!");
+        // mqtt_cmd_answer("Yeah!");
     // }
 }
 
@@ -318,7 +339,7 @@ static void cmd_resetout(uint32_t argc, char *argv[])
     // else
     // {
         IO_setOut(0);
-        mqtt_cmd_answer("Yeah!");
+        // mqtt_cmd_answer("Yeah!");
     // }
 }
 
@@ -347,7 +368,7 @@ static void cmd_setconfig(uint32_t argc, char *argv[])
     printf("cmd_setconfig\n");
     
     
-    if(argc != 11)
+    if(argc != 9)
     {
         printf("bad arguments - is %d \n", argc);
         mqtt_cmd_answer("ERROR - > Bad arguments");
@@ -367,17 +388,13 @@ static void cmd_setconfig(uint32_t argc, char *argv[])
     sscanf(argv[5], "%d", &newConcig.wifiMode);
     printf("wifi2 %u\n",newConcig.wifiMode);
     // printf("%s\n",argv[6]);
-    sscanf(argv[6], "%lu", &newConcig.groups);
-    printf("groups %lu\n",newConcig.groups);
-     
-    sscanf(argv[7], "%s", &newConcig.event_onClose_topic);
-    printf("event_onClose_topic %s\n",newConcig.event_onClose_topic);
-    sscanf(argv[8], "%s", &newConcig.event_onClose_msg);
-    printf("event_onClose_msg %s\n",newConcig.event_onClose_msg);
-    sscanf(argv[9], "%s", &newConcig.event_onOpen_topic);
-    printf("event_onOpen_topic %s\n",newConcig.event_onOpen_topic);
-    sscanf(argv[10], "%s", &newConcig.event_onOpen_msg);
-    printf("event_onOpen_msg %s\n",newConcig.event_onOpen_msg);
+    sscanf(argv[6], "%lu", &newConcig.output_groups);
+    printf("output_groups %lu\n",newConcig.output_groups);
+    sscanf(argv[7], "%u", &newConcig.input_group);
+    printf("input_group %u\n",newConcig.input_group);
+    sscanf(argv[8], "%u", &newConcig.inputMode);
+    printf("input_mode %u\n",newConcig.inputMode);
+
     DATAMANAGER_setSpineData(&newConcig);
     mqtt_cmd_answer("OK");
 
@@ -400,7 +417,7 @@ static void cmd_addToGroup(uint32_t argc, char *argv[])
     if(groupNo >= 1 && groupNo <= 32 )
     {
         DATAMANAGER_getSpineData(&newConcig);
-        newConcig.groups |= 1<<(groupNo-1);
+        newConcig.output_groups |= 1<<(groupNo-1);
         DATAMANAGER_setSpineData(&newConcig);
         mqtt_cmd_answer("OK");
     }
@@ -425,7 +442,7 @@ static void cmd_removeFromGroup(uint32_t argc, char *argv[])
     if(groupNo >= 1 && groupNo <= 32 )
     {
         DATAMANAGER_getSpineData(&newConcig);
-        newConcig.groups &= ~(1<<(groupNo-1));
+        newConcig.output_groups &= ~(1<<(groupNo-1));
         DATAMANAGER_setSpineData(&newConcig);
         mqtt_cmd_answer("OK");
     }
@@ -449,7 +466,7 @@ static void cmd_setGroups(uint32_t argc, char *argv[])
     // if(groupNo >= 1 && groupNo <= 32 )
     {
         DATAMANAGER_getSpineData(&newConcig);
-        newConcig.groups = groupNo;
+        newConcig.output_groups = groupNo;
         DATAMANAGER_setSpineData(&newConcig);
         mqtt_cmd_answer("OK");
     }
@@ -458,7 +475,40 @@ static void cmd_setGroups(uint32_t argc, char *argv[])
     //     mqtt_cmd_answer("ERROR -> bad group number");
     // }
 }
+static void cmd_setBuildingId(uint32_t argc, char *argv[])
+{
+    printf("%s\n", __func__);
+    if(argc != 2)
+    {
+        printf("bad arguments\n");
+        mqtt_cmd_answer("ERROR - > Bad arguments");
+        return;
+    }
+    TSpineConfigDataStruct newConcig;
+    uint32_t groupNo;
+    sscanf(argv[1], "%d", &groupNo);
+    // if(groupNo >= 1 && groupNo <= 32 )
+    {
+        DATAMANAGER_getSpineData(&newConcig);
+        newConcig.output_groups = groupNo;
+        DATAMANAGER_setSpineData(&newConcig);
+        mqtt_cmd_answer("OK");
+    }
+}
 
+static void cmd_ping(uint32_t argc, char *argv[])
+{
+    printf("%s - argc = %d\n", __func__, argc);
+    if(argc == 1)
+        mqtt_cmd_answer("ACK");
+    else if (argc == 2)
+    {
+        printf(argv[1]);
+        char tmp[64];
+        sprintf(tmp, "ACK %s", argv[1]);
+        mqtt_cmd_answer(tmp);
+    }
+}
 
 static char* getptrtofirsttag(char * text)
 {
